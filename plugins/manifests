@@ -1,0 +1,41 @@
+[
+  {
+    "Name": "Target Board",
+    "Identifier": "5f0c2a8e-7d41-4b6e-9a3c-2e8d1b7f4c19",
+    "Version": {
+      "Major": 1,
+      "Minor": 4,
+      "Patch": 0,
+      "Build": 0
+    },
+    "Author": "Amogh Bhosekar",
+    "Homepage": "https://github.com/iambad225/NINA_TargetBoard",
+    "Repository": "https://github.com/iambad225/NINA_TargetBoard",
+    "License": "MPL-2.0",
+    "LicenseURL": "https://www.mozilla.org/en-US/MPL/2.0/",
+    "ChangelogURL": "https://github.com/iambad225/NINA_TargetBoard/blob/main/CHANGELOG.md",
+    "Tags": [
+      "Planning",
+      "Calendar",
+      "Scheduler",
+      "Sequencer",
+      "Progress"
+    ],
+    "MinimumApplicationVersion": {
+      "Major": 3,
+      "Minor": 2,
+      "Patch": 0,
+      "Build": 9001
+    },
+    "Descriptions": {
+      "ShortDescription": "A calendar for your targets: plan sequences across dark nights and track their progress.",
+      "LongDescription": "Target Board is a calendar for your imaging targets, in the spirit of Google Calendar.\n\n* Reads your saved sequence files (read-only) and lists every target with its progress, taken from the sequence's own loop counters and NINA's exposure counts.\n* Drag a target onto a night to plan it. Events are limited to dark time and to each target's conditions (for example 'altitude above 30°' or 'above my custom horizon'). Whatever does not fit stays on the target for you to place on another night.\n* Night, Week and Month views. Move, resize and split events by dragging.\n* Logs every light frame NINA saves, so finished work shows on the calendar, and records the date each filter and each target was completed.\n\nNothing is ever written to your sequences. The board keeps its own files in Documents\\N.I.N.A\\TargetBoard.\n\n**How to use it**\n\n* Drag a target, or a target set's header, from the list onto a night.\n* Hold Shift while you drop, move or resize to ignore the target's conditions. Dark time and the horizon still apply.\n* With a target selected, double-click empty time on the calendar to place it there.\n* Selecting a target shades the times it can be shot and draws its altitude. Conditions always sit inside dark time, and all ticked ones must hold.\n* Drag an event to move it; drag its bottom edge to change its length.\n* Ctrl+click selects several events. Drag one of them to move them all together; Delete removes them; Ctrl+→ and Ctrl+← move them a night.\n* Double-click an event to see its frames by filter. Esc or a click closes the view.\n* Right-click an event, or a night's header, to split it, shift the plan, add missed time or settle the night.\n* Ctrl+Z, or the Undo button, takes back the last change to the plan.\n* The mouse wheel over the calendar moves it a night at a time: down goes ahead, up goes back. In Month view it moves a month.\n* Double-click a row, or right-click it and choose View details, to open its details under the list; Esc or ✕ closes them. Click a selected row again to deselect it. Right-click a row to mark it done or hide it.\n* Drag a target set's header to plan its targets one after another, in order.\n* ✓ done, ◐ partly done, ✗ missed. Finished events are faded.\n* A dashed outline with ⚠ means part of the event lies outside the target's conditions.\n* The strip at the right of each night shows when frames were actually taken."
+    },
+    "Installer": {
+      "URL": "https://github.com/iambad225/NINA_TargetBoard/releases/download/v1.4.0.0/TargetBoard-1.4.0.0.zip",
+      "Type": "ARCHIVE",
+      "Checksum": "3a4a9efbee3e4337478c169b24f212de287b9cbd33e5f8415a84f6f30b1268ff",
+      "ChecksumType": "SHA256"
+    }
+  }
+]
