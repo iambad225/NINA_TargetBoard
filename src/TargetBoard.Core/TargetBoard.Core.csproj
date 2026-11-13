@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Plain .NET library with no NINA or WPF references.
+    The plugin project compiles these same source files into its own DLL,
+    so this project exists only so the logic can be built and tested on its own.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>TargetBoard.Core</RootNamespace>
+    <AssemblyName>TargetBoard.Core</AssemblyName>
+  </PropertyGroup>
+
+</Project>

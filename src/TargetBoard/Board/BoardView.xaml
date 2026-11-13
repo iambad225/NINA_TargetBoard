@@ -1,0 +1,398 @@
+<UserControl
+    x:Class="TargetBoard.Board.BoardView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:TargetBoard.Board"
+    xmlns:util="clr-namespace:TargetBoard.Util"
+    MinWidth="620"
+    MinHeight="360">
+
+    <UserControl.Resources>
+        <util:BoolToVisibility x:Key="TbBoolToVis" />
+        <util:NullToVisibility x:Key="TbNullToVis" />
+        <util:EnumEquals x:Key="TbEnumEquals" />
+        <util:HexToBrush x:Key="TbHexToBrush" />
+
+        <Style x:Key="TbSection" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,16,0,4" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <!-- A list row: hover and selection are drawn here, from the row's own IsSelected flag. -->
+        <Style x:Key="TbRow" TargetType="Border">
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#18FFFFFF" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#38FFFFFF" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TbHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <DataTemplate x:Key="TbConditionTemplate" DataType="{x:Type local:ConditionVM}">
+            <Border Margin="0,3" Padding="6" BorderThickness="1" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Width="24" Height="24" Margin="6,0,0,0" Content="✕" ToolTip="Remove this condition"
+                                Command="{Binding DataContext.RemoveConditionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" />
+                        <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding Enabled}" ToolTip="Use this condition" />
+                        <ComboBox Margin="6,0,0,0" FontSize="12" ItemsSource="{Binding Kinds}" DisplayMemberPath="Label" SelectedValuePath="Kind"
+                                  SelectedValue="{Binding Kind}" />
+                    </DockPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBox Width="60" FontSize="12" Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged, Delay=400}" />
+                        <TextBlock Margin="6,0" VerticalAlignment="Center" FontSize="12" Text="{Binding Unit}" />
+                        <TextBox Width="60" FontSize="12" Text="{Binding Value2Text, UpdateSourceTrigger=PropertyChanged, Delay=400}"
+                                 Visibility="{Binding HasSecondValue, Converter={StaticResource TbBoolToVis}}" />
+                        <TextBlock Margin="6,0" VerticalAlignment="Center" FontSize="12" Text="{Binding Unit2}" />
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="OrangeRed" Text="check value"
+                                   Visibility="{Binding HasError, Converter={StaticResource TbBoolToVis}}" />
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11" Opacity="0.7" Text="{Binding SourceText}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid TextElement.Foreground="{DynamicResource PrimaryBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ListColumn" Width="370" MinWidth="260" />
+                <ColumnDefinition Width="6" />
+                <ColumnDefinition Width="*" MinWidth="300" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left, full height: the target list, with the details of a double-clicked row under it -->
+            <Grid x:Name="LeftPanel" Grid.Column="0" Margin="6,6,0,0" Focusable="True" FocusVisualStyle="{x:Null}" Background="Transparent">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition x:Name="ListRow" Height="*" MinHeight="120" />
+                    <RowDefinition x:Name="SplitRow" Height="0" />
+                    <RowDefinition x:Name="DetailsRow" Height="0" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" Margin="0,0,0,4">
+                    <Button DockPanel.Dock="Right" Margin="6,0,0,0" Padding="8,2" Command="{Binding RescanCommand}" Content="Re-read"
+                            ToolTip="Read the sequence files again (this also happens by itself when a file changes)" />
+                    <TextBlock DockPanel.Dock="Left" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Text="{Binding TargetCountText}" />
+                    <ComboBox FontSize="12" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedSort}" ToolTip="Sort the list" />
+                </DockPanel>
+                <WrapPanel Grid.Row="1" Margin="0,0,0,4">
+                    <StackPanel Margin="0,0,14,2" Orientation="Horizontal" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                        <CheckBox VerticalAlignment="Center" IsChecked="{Binding ShowHidden}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Show hidden" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,14,2" Orientation="Horizontal" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                        <CheckBox VerticalAlignment="Center" IsChecked="{Binding ShowComplete}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Show finished" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,2" Orientation="Horizontal" ToolTip="Show standalone files that repeat a target from a target set as their own rows" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                        <CheckBox VerticalAlignment="Center" IsChecked="{Binding ShowCopies}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Show copies" />
+                    </StackPanel>
+                </WrapPanel>
+
+                <!-- The target list: plain rows in a scroll area. Selection lives in the view model and the rows draw it;
+                     the code-behind owns every click, double-click, drag and right-click on them. -->
+                <Border Grid.Row="2" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="2">
+                    <ScrollViewer x:Name="ListScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
+                                  util:SmoothScroll.Speed="{Binding ListScrollSpeed}"
+                                  util:SmoothScroll.Smooth="{Binding SmoothScrolling}">
+                        <ItemsControl x:Name="TargetRows" Focusable="False" ItemsSource="{Binding Items}"
+                                      PreviewMouseLeftButtonDown="Rows_PreviewMouseLeftButtonDown"
+                                      PreviewMouseMove="Rows_PreviewMouseMove"
+                                      PreviewMouseLeftButtonUp="Rows_PreviewMouseLeftButtonUp"
+                                      PreviewMouseRightButtonUp="Rows_PreviewMouseRightButtonUp">
+                            <ItemsControl.Resources>
+
+                        <!-- A target set: header row; its targets follow, nested under it. -->
+                        <DataTemplate DataType="{x:Type local:GroupItemVM}">
+                            <Border Style="{StaticResource TbRow}">
+                            <Border Margin="0,6,0,0" Padding="6,6" Background="#16FFFFFF" CornerRadius="4"
+                                    ToolTip="Target set: drag this header onto a night to plan its targets in order. Double-click for details.">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Left" Width="26" Height="26" Margin="0,0,8,0" Padding="0" FontSize="14"
+                                                Content="{Binding Chevron}" Command="{Binding ToggleCommand}" ToolTip="Show or hide its targets" />
+                                        <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11.5" Opacity="0.8" Text="{Binding PanelsText}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="14.5" FontWeight="Bold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                    <DockPanel Margin="0,6,0,3">
+                                        <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="{Binding PercentText}" />
+                                        <ProgressBar Height="7" VerticalAlignment="Center" Maximum="100" Value="{Binding Progress, Mode=OneWay}" />
+                                    </DockPanel>
+                                    <TextBlock FontSize="12" Opacity="0.9" Text="{Binding ProgressText}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding PlanText}" TextWrapping="Wrap" />
+                                    <TextBlock FontSize="11" Opacity="0.65" Text="{Binding FileLine}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                            </Border>
+                        </DataTemplate>
+
+                        <!-- A target, standalone or nested inside a target set. -->
+                        <DataTemplate DataType="{x:Type local:TargetItemVM}">
+                            <Border Style="{StaticResource TbRow}">
+                            <Grid Margin="0,4" ToolTip="{Binding ToolTip}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="6" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <!-- Indent and guide line for targets inside a set. -->
+                                <Grid Grid.Column="0" Width="24" IsHitTestVisible="False" Visibility="{Binding InGroup, Converter={StaticResource TbBoolToVis}}">
+                                    <Border Width="2" Margin="0,-8,0,-8" HorizontalAlignment="Center" Background="{DynamicResource BorderBrush}" />
+                                    <Border Width="9" Height="2" Margin="12,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource BorderBrush}" />
+                                </Grid>
+                                <Border Grid.Column="1" Background="{Binding ColorBrush}" CornerRadius="3" IsHitTestVisible="False" />
+                                <StackPanel Grid.Column="2" Margin="10,0,2,0">
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Right" Margin="6,0,0,0" Padding="6,1" VerticalAlignment="Center" Background="#26FFFFFF" CornerRadius="3"
+                                                Visibility="{Binding Badge, Converter={StaticResource TbNullToVis}}">
+                                            <TextBlock FontSize="11" Text="{Binding Badge}" />
+                                        </Border>
+                                        <TextBlock FontSize="13.5" FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                    <DockPanel Margin="0,5,0,3">
+                                        <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="{Binding PercentText}" />
+                                        <ProgressBar Height="7" VerticalAlignment="Center" Maximum="100" Value="{Binding Progress, Mode=OneWay}" />
+                                    </DockPanel>
+                                    <TextBlock FontSize="12" Opacity="0.9" Text="{Binding ProgressText}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding PlanText}" TextWrapping="Wrap"
+                                               Visibility="{Binding PlanText, Converter={StaticResource TbNullToVis}}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOverPlanned}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F5A623" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Opacity="0.75" Text="{Binding CopiesText}" TextWrapping="Wrap"
+                                               Visibility="{Binding CopiesText, Converter={StaticResource TbNullToVis}}" />
+                                    <TextBlock FontSize="11" Opacity="0.65" Text="{Binding FileLine}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.Resources>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Rows"
+                              DragCompleted="DetailsSplitter_DragCompleted"
+                              Visibility="{Binding DetailsOpen, Converter={StaticResource TbBoolToVis}}" />
+
+                <!-- Details: only after a double-click -->
+                <Border Grid.Row="4" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="2"
+                        Visibility="{Binding DetailsOpen, Converter={StaticResource TbBoolToVis}}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  util:SmoothScroll.Speed="{Binding ListScrollSpeed}"
+                                  util:SmoothScroll.Smooth="{Binding SmoothScrolling}">
+                        <Grid Margin="10,6,10,10">
+
+                            <!-- Selected target set -->
+                            <StackPanel Visibility="{Binding HasGroupSelection, Converter={StaticResource TbBoolToVis}}">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Width="26" Height="26" Command="{Binding CloseDetailsCommand}" Content="✕" ToolTip="Close the details (Esc)" />
+                                    <TextBlock VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Text="{Binding GroupName}" TextTrimming="CharacterEllipsis" />
+                                </DockPanel>
+                                <TextBlock Margin="0,2,0,0" FontSize="11" Opacity="0.75" Text="{Binding GroupFile}" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0" FontSize="12.5" Text="{Binding GroupProgress}" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12" Opacity="0.9" Text="{Binding GroupPlanning}" TextWrapping="Wrap" />
+                                <TextBlock Style="{StaticResource TbSection}" Text="Targets in this set"
+                                           ToolTip="Drag the set's header onto a night: its targets are placed one after another, in this order. Finished or fully planned targets are skipped; any that don't fit stay to place." />
+                                <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding GroupLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type local:LineVM}">
+                                        <StackPanel Margin="0,3">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold" Text="{Binding Count}" />
+                                                <TextBlock FontSize="12.5" FontWeight="SemiBold" Text="{Binding Filter}" TextTrimming="CharacterEllipsis" />
+                                            </DockPanel>
+                                            <ProgressBar Height="6" Margin="0,3,0,2" Maximum="100" Value="{Binding Percent, Mode=OneWay}" />
+                                            <TextBlock FontSize="11" Opacity="0.8" Text="{Binding Time}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            </StackPanel>
+
+                            <!-- Selected target -->
+                            <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource TbBoolToVis}}">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Width="26" Height="26" Command="{Binding CloseDetailsCommand}" Content="✕" ToolTip="Close the details (Esc)" />
+                                    <TextBlock VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Text="{Binding SelectedName}" TextTrimming="CharacterEllipsis" />
+                                </DockPanel>
+                                <TextBlock Margin="0,2,0,0" FontSize="11.5" Opacity="0.85" Text="{Binding SelectedCoordinates}" />
+                                <DockPanel Margin="0,4,0,0">
+                                    <Button DockPanel.Dock="Right" Margin="8,0,0,0" Padding="8,1" VerticalAlignment="Top" Command="{Binding ShowFileCommand}" Content="Show file" />
+                                    <TextBlock FontSize="11" Opacity="0.75" Text="{Binding SelectedFile}" TextWrapping="Wrap" />
+                                </DockPanel>
+                                <TextBlock Margin="0,10,0,0" FontSize="12.5" TextWrapping="Wrap" Text="{Binding SelectedProgress}" />
+                                <TextBlock Margin="0,2,0,0" FontSize="12" Opacity="0.9" TextWrapping="Wrap" Text="{Binding SelectedPlanning}" />
+
+                                <TextBlock Style="{StaticResource TbSection}" Text="Exposures" />
+                                <Grid Margin="0,0,0,2" Opacity="0.7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" FontSize="11" Text="Filter" />
+                                    <TextBlock Grid.Column="1" FontSize="11" Text="Length" />
+                                    <TextBlock Grid.Column="2" Margin="2,0,0,0" FontSize="11" Text="Progress" />
+                                    <TextBlock Grid.Column="3" HorizontalAlignment="Right" FontSize="11" Text="Done" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding Lines}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type local:LineVM}">
+                                            <Grid Margin="0,3" ToolTip="{Binding Time}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70" />
+                                                    <ColumnDefinition Width="48" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="60" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" FontSize="12.5" FontWeight="SemiBold" Text="{Binding Filter}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="1" FontSize="12.5" Text="{Binding Exposure}" />
+                                                <ProgressBar Grid.Column="2" Height="7" Margin="2,0,8,0" VerticalAlignment="Center" Maximum="100" Value="{Binding Percent, Mode=OneWay}" />
+                                                <TextBlock Grid.Column="3" HorizontalAlignment="Right" FontSize="12.5" Text="{Binding Count}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource TbHint}" Text="{Binding SelectedCaptured}"
+                                           Visibility="{Binding SelectedCaptured, Converter={StaticResource TbNullToVis}}" />
+
+
+                                <DockPanel Margin="0,16,0,4">
+                                    <Button DockPanel.Dock="Right" Padding="8,1" Command="{Binding ResetConditionsCommand}" Content="Reset"
+                                            ToolTip="Back to the default conditions plus those found in the sequence" />
+                                    <Button DockPanel.Dock="Right" Margin="0,0,6,0" Padding="8,1" Command="{Binding AddConditionCommand}" Content="+ Add" />
+                                    <TextBlock VerticalAlignment="Center" FontSize="13.5" FontWeight="SemiBold" Text="When it can be shot"
+                                               ToolTip="Always inside dark time. All ticked conditions must hold. Hold Shift while dragging to place an event outside them." />
+                                </DockPanel>
+                                <ItemsControl Margin="0,4,0,0" ItemTemplate="{StaticResource TbConditionTemplate}" ItemsSource="{Binding Conditions}" />
+
+                                <TextBlock Style="{StaticResource TbSection}" Text="Color" />
+                                <ItemsControl ItemsSource="{Binding ColorChoices}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Width="22" Height="22" Margin="0,0,6,6" Cursor="Hand" ToolTip="Use this color"
+                                                    Command="{Binding DataContext.SetColorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{Binding Converter={StaticResource TbHexToBrush}}" CornerRadius="11" />
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <StackPanel Margin="0,6,0,0" Orientation="Horizontal"
+                                            ToolTip="Treat this target as finished on the board: nothing left to place, and the date goes in its history. The sequence file is not changed." Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                                    <CheckBox VerticalAlignment="Center" IsChecked="{Binding SelectedMarkedDone}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Mark as done" />
+                                </StackPanel>
+                                <StackPanel Margin="0,6,0,0" Orientation="Horizontal" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                                    <CheckBox VerticalAlignment="Center" IsChecked="{Binding SelectedHidden}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Text="Hide from the list" />
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource TbSection}" Text="Notes" />
+                                <TextBox MinHeight="44" FontSize="12" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding SelectedNotes, UpdateSourceTrigger=LostFocus}" />
+
+                                <TextBlock Style="{StaticResource TbSection}" Text="Completed" />
+                                <TextBlock Text="None yet">
+                                    <TextBlock.Style>
+                                        <Style BasedOn="{StaticResource TbHint}" TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding History.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding History}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,2" FontSize="11.5" Text="{Binding}" TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns"
+                          DragCompleted="ListSplitter_DragCompleted" />
+
+            <!-- Right: the calendar, with its toolbar -->
+            <DockPanel Grid.Column="2" Margin="0,6,6,0">
+                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4" Orientation="Horizontal">
+                    <Button Margin="0,0,4,4" Padding="10,2" Command="{Binding TodayCommand}" Content="Tonight" />
+                    <Button Width="28" Margin="0,0,2,4" Command="{Binding PreviousCommand}" Content="◀" ToolTip="Previous" />
+                    <Button Width="28" Margin="0,0,6,4" Command="{Binding NextCommand}" Content="▶" ToolTip="Next" />
+                    <DatePicker Width="120" Margin="0,0,8,4" SelectedDate="{Binding AnchorDate, Mode=TwoWay}" />
+                    <TextBlock Margin="0,0,12,4" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Text="{Binding RangeTitle}" />
+                    <RadioButton Margin="0,0,8,4" VerticalAlignment="Center" Content="Night" GroupName="TbMode"
+                                 IsChecked="{Binding Mode, Converter={StaticResource TbEnumEquals}, ConverterParameter=Night}" />
+                    <RadioButton Margin="0,0,8,4" VerticalAlignment="Center" Content="Week" GroupName="TbMode"
+                                 IsChecked="{Binding Mode, Converter={StaticResource TbEnumEquals}, ConverterParameter=Week}" />
+                    <RadioButton Margin="0,0,14,4" VerticalAlignment="Center" Content="Month" GroupName="TbMode"
+                                 IsChecked="{Binding Mode, Converter={StaticResource TbEnumEquals}, ConverterParameter=Month}" />
+                    <TextBlock Margin="0,0,4,4" VerticalAlignment="Center" Text="Drop" />
+                    <ComboBox Width="170" Margin="0,0,14,4" ItemsSource="{Binding DropSizes}" DisplayMemberPath="Label" SelectedItem="{Binding DropSize}"
+                              ToolTip="How much time a target gets when you drop it from the list. Never more than its sequence still needs." />
+                    <StackPanel Margin="0,0,14,4" VerticalAlignment="Center" Orientation="Horizontal"
+                                ToolTip="The Moon's altitude through each night, as a dotted grey line" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="SwitchRow_MouseLeftButtonUp">
+                        <CheckBox VerticalAlignment="Center" IsChecked="{Binding ShowMoon}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="Moon" />
+                    </StackPanel>
+                    <Button Margin="0,0,0,4" Padding="10,2" Command="{Binding UndoCommand}" Content="↶ Undo" IsEnabled="{Binding CanUndo}" ToolTip="{Binding UndoToolTip}" />
+                </WrapPanel>
+                <Border BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+                    <local:CalendarCanvas Controller="{Binding}" Snapshot="{Binding Snapshot}" />
+                </Border>
+            </DockPanel>
+        </Grid>
+
+        <!-- Status line -->
+        <DockPanel Grid.Row="1" Margin="8,4">
+            <TextBlock DockPanel.Dock="Right" Margin="12,0,0,0" FontSize="11.5" Opacity="0.75" Text="{Binding ScanSummary}" />
+            <TextBlock FontSize="12" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}" />
+        </DockPanel>
+    </Grid>
+</UserControl>

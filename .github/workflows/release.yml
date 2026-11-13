@@ -1,0 +1,88 @@
+# Builds and tests every push to main. When the version in AssemblyInfo.cs has no release yet, it also:
+#   1. packs TargetBoard.dll into TargetBoard-<version>.zip and publishes it as GitHub release v<version>;
+#   2. adds that version to the nina-repo branch, which NINA reads as a plugin repository
+#      (https://raw.githubusercontent.com/<owner>/<repo>/nina-repo), so NINA offers it as an update.
+# To release: raise AssemblyVersion in src/TargetBoard/Properties/AssemblyInfo.cs, add a CHANGELOG entry, push to main.
+
+name: Build and release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read the version
+        id: version
+        run: |
+          v=$(python build/release.py version)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" > /dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "Version $v is already released; this run only builds and tests."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+            echo "Version $v is new; this run releases it."
+          fi
+
+      - name: Run the tests
+        run: dotnet run -c Release --project tests/TargetBoard.Core.Tests/TargetBoard.Core.Tests.csproj
+
+      - name: Build the plugin
+        run: dotnet build src/TargetBoard/TargetBoard.csproj -c Release -p:SkipNinaDeploy=true
+
+      - name: Pack the plugin and write its manifest
+        if: steps.version.outputs.new == 'true'
+        run: python build/release.py package --repo "$GITHUB_REPOSITORY" --dll src/TargetBoard/bin/Release/net8.0-windows/TargetBoard.dll --out dist
+
+      - name: Publish the release
+        if: steps.version.outputs.new == 'true'
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          gh release create "v$v" "dist/TargetBoard-$v.zip" --target "$GITHUB_SHA" --title "Target Board $v" --notes-file dist/notes.md
+
+      - name: Publish the manifest for NINA
+        if: steps.version.outputs.new == 'true'
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" nina-repo > /dev/null; then
+            git clone --quiet --branch nina-repo --depth 1 "$remote" nina-repo
+          else
+            git init --quiet -b nina-repo nina-repo
+            git -C nina-repo remote add origin "$remote"
+          fi
+          python build/release.py site --manifest dist/manifest.json --site nina-repo --repo "$GITHUB_REPOSITORY"
+          cd nina-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "Target Board $v"
+          git push --quiet origin nina-repo

@@ -1,0 +1,201 @@
+<UserControl
+    x:Class="TargetBoard.Settings.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:util="clr-namespace:TargetBoard.Util">
+
+    <UserControl.Resources>
+        <util:NullToVisibility x:Key="TbNullToVis" />
+        <Style x:Key="TbHeading" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,12,0,4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style x:Key="TbHint" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="8" MaxWidth="640" HorizontalAlignment="Left" TextElement.Foreground="{DynamicResource PrimaryBrush}">
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Tips" Margin="0,0,0,4" />
+            <TextBlock Margin="0,6,0,2" FontSize="12" FontWeight="SemiBold" Text="Planning" />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Drag a target, or a target set's header, from the list onto a night." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Hold Shift while you drop, move or resize to ignore the target's conditions. Dark time and the horizon still apply." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• With a target selected, double-click empty time on the calendar to place it there." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Selecting a target shades the times it can be shot and draws its altitude. Conditions always sit inside dark time, and all ticked ones must hold." />
+            <TextBlock Margin="0,6,0,2" FontSize="12" FontWeight="SemiBold" Text="Events" />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Drag an event to move it; drag its bottom edge to change its length." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Ctrl+click selects several events. Drag one of them to move them all together; Delete removes them; Ctrl+→ and Ctrl+← move them a night." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Double-click an event to see its frames by filter. Esc or a click closes the view." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Right-click an event, or a night's header, to split it, shift the plan, add missed time or settle the night." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Ctrl+Z, or the Undo button, takes back the last change to the plan." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• The mouse wheel over the calendar moves it a night at a time: down goes ahead, up goes back. In Month view it moves a month." />
+            <TextBlock Margin="0,6,0,2" FontSize="12" FontWeight="SemiBold" Text="The list" />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Double-click a row, or right-click it and choose View details, to open its details under the list; Esc or ✕ closes them. Click a selected row again to deselect it. Right-click a row to mark it done or hide it." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• Drag a target set's header to plan its targets one after another, in order." />
+            <TextBlock Margin="0,6,0,2" FontSize="12" FontWeight="SemiBold" Text="Reading the calendar" />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• ✓ done, ◐ partly done, ✗ missed. Finished events are faded." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• A dashed outline with ⚠ means part of the event lies outside the target's conditions." />
+            <TextBlock Style="{StaticResource TbHint}" Margin="10,0,0,3" Text="• The strip at the right of each night shows when frames were actually taken." />
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Sequence files" />
+            <TextBlock Style="{StaticResource TbHint}"
+                       Text="Target Board only reads these files. It never changes your sequences." />
+            <DockPanel Margin="0,2">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding UseProfileFolders}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Read NINA's default sequence folder and targets folder" TextWrapping="Wrap" />
+            </DockPanel>
+            <TextBlock Margin="22,0,0,4" FontSize="10.5" Opacity="0.75" Text="{Binding ProfileFoldersText}" />
+            <DockPanel Margin="0,2">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding IncludeSubfolders}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Include subfolders" TextWrapping="Wrap" />
+            </DockPanel>
+
+            <DockPanel Margin="0,8,0,2">
+                <Button DockPanel.Dock="Right" Padding="8,1" Command="{Binding AddFolderCommand}" Content="Add folder…" />
+                <TextBlock VerticalAlignment="Center" Text="More folders" />
+            </DockPanel>
+            <ItemsControl ItemsSource="{Binding ExtraFolders}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="0,1">
+                            <Button DockPanel.Dock="Right" Width="22" Content="✕" ToolTip="Stop reading this folder"
+                                    Command="{Binding DataContext.RemoveFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip="{Binding}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <DockPanel Margin="0,8,0,2">
+                <Button DockPanel.Dock="Right" Padding="8,1" Command="{Binding AddFileCommand}" Content="Add files…" />
+                <TextBlock VerticalAlignment="Center" Text="Single files" />
+            </DockPanel>
+            <ItemsControl ItemsSource="{Binding ExtraFiles}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="0,1">
+                            <Button DockPanel.Dock="Right" Width="22" Content="✕" ToolTip="Stop reading this file"
+                                    Command="{Binding DataContext.RemoveFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip="{Binding}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <DockPanel Margin="0,8,0,0">
+                <Button DockPanel.Dock="Right" Padding="8,1" Command="{Binding RescanCommand}" Content="Read now" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ScanSummary}" TextWrapping="Wrap" />
+            </DockPanel>
+            <TextBlock Margin="0,2,0,0" FontSize="10.5" Foreground="OrangeRed" Text="{Binding ScanErrors}" TextWrapping="Wrap"
+                       Visibility="{Binding ScanErrors, Converter={StaticResource TbNullToVis}}" />
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Planning rules" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="230" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Margin="0,3" VerticalAlignment="Center" Text="Dark time is when the Sun is" />
+                <ComboBox Grid.Row="0" Grid.Column="1" Width="160" Margin="0,3" HorizontalAlignment="Left"
+                          ItemsSource="{Binding DarkTimeModes}" SelectedItem="{Binding DarkTime}"
+                          ToolTip="Astronomical: below -18°. Nautical: below -12° (for high latitudes in summer)." />
+
+                <TextBlock Grid.Row="1" Margin="0,3" VerticalAlignment="Center" Text="Overhead on top of exposure time (%)" />
+                <TextBox Grid.Row="1" Grid.Column="1" Width="60" Margin="0,3" HorizontalAlignment="Left" Text="{Binding OverheadPercent}"
+                         ToolTip="Downloads, dithering, focusing and meridian flips. Used when a target is dropped with its whole remaining time." />
+
+                <TextBlock Grid.Row="2" Margin="0,3" VerticalAlignment="Center" Text="Snap events to (minutes)" />
+                <TextBox Grid.Row="2" Grid.Column="1" Width="60" Margin="0,3" HorizontalAlignment="Left" Text="{Binding SnapMinutes}" />
+
+                <TextBlock Grid.Row="3" Margin="0,3" VerticalAlignment="Center" Text="Shortest event (minutes)" />
+                <TextBox Grid.Row="3" Grid.Column="1" Width="60" Margin="0,3" HorizontalAlignment="Left" Text="{Binding MinimumEventMinutes}" />
+
+                <TextBlock Grid.Row="4" Margin="0,3" VerticalAlignment="Center" Text="Events may overlap" />
+                <CheckBox Grid.Row="4" Grid.Column="1" Margin="0,3" VerticalAlignment="Center" IsChecked="{Binding AllowOverlap}"
+                          ToolTip="Leave off for one telescope. Turn on if you plan several rigs on one board." />
+            </Grid>
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Conditions for new targets" />
+            <TextBlock Style="{StaticResource TbHint}"
+                       Text="Given to a target the first time the board sees it. You can change them per target afterwards." />
+            <StackPanel Margin="0,2" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Altitude at least" />
+                <TextBox Width="50" Margin="6,0" Text="{Binding DefaultMinAltitude}" />
+                <TextBlock VerticalAlignment="Center" Text="° (0 = none)" />
+            </StackPanel>
+            <DockPanel Margin="0,4">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding DefaultAboveHorizon}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Above the profile's custom horizon" TextWrapping="Wrap" />
+            </DockPanel>
+            <DockPanel Margin="0,2">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding ImportSequenceConditions}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Copy altitude and horizon conditions found in the sequence" TextWrapping="Wrap" />
+            </DockPanel>
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Target list" />
+            <DockPanel Margin="0,4">
+                <TextBlock DockPanel.Dock="Left" Margin="0,0,10,0" VerticalAlignment="Center" Text="Mouse wheel speed" />
+                <TextBlock DockPanel.Dock="Right" Width="40" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding ListScrollSpeedText}" />
+                <Slider VerticalAlignment="Center" Minimum="0.25" Maximum="3" SmallChange="0.05" LargeChange="0.25"
+                        TickFrequency="0.05" IsSnapToTickEnabled="True" Value="{Binding ListScrollSpeed, Delay=250}" />
+            </DockPanel>
+            <TextBlock Style="{StaticResource TbHint}"
+                       Text="For the target list and the details under it. 1× is Windows' usual wheel step (three lines). Lower is slower." />
+            <DockPanel Margin="0,4">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding SmoothScrolling}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Smooth scrolling (glide instead of jump)" TextWrapping="Wrap" />
+            </DockPanel>
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Each morning" />
+            <TextBlock Style="{StaticResource TbHint}"
+                       Text="Once a night is over, the board compares each event with the frames NINA logged. Nothing changes during the night." />
+            <DockPanel Margin="0,4">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding AutoSettle}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"
+                           Text="Settle last night automatically: partly done events shrink to what was done, and the missing time goes onto that target's next event (later events move out of the way)" />
+            </DockPanel>
+            <StackPanel Margin="0,4" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Settle at" />
+                <ComboBox Width="80" Margin="8,0" ItemsSource="{Binding SettleTimes}" DisplayMemberPath="Label" SelectedItem="{Binding SettleAt}" />
+                <TextBlock VerticalAlignment="Center" Opacity="0.75" Text="local time (never before dawn)" />
+            </StackPanel>
+            <TextBlock Style="{StaticResource TbHint}"
+                       Text="Missed events are only marked; right-click one to shift the plan or add its time to the next event. Ctrl+Z on the calendar undoes a settle." />
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="History" />
+            <DockPanel Margin="0,2">
+                <CheckBox DockPanel.Dock="Left" VerticalAlignment="Center" IsChecked="{Binding LogCaptures}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Log every light frame NINA saves (shows finished work on the calendar)" TextWrapping="Wrap" />
+            </DockPanel>
+            <StackPanel Margin="0,4" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Start a new session after a gap of" />
+                <TextBox Width="50" Margin="6,0" Text="{Binding SessionGapMinutes}" />
+                <TextBlock VerticalAlignment="Center" Text="minutes" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource TbHeading}" Text="Data folder" />
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Padding="8,1" Command="{Binding OpenDataFolderCommand}" Content="Open" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding DataFolder}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DataFolder}" />
+            </DockPanel>
+            <TextBlock Style="{StaticResource TbHint}" Margin="0,4,0,0"
+                       Text="board.json holds your plan and settings, history.json the completion dates, captures.jsonl the frame log. Copy the folder to back them up." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The NINA plugin. Targets NINA 3.2 (net8.0-windows); NINA 3.3 nightlies load it too.
+    The core logic in ..\TargetBoard.Core is compiled straight into this DLL, so the plugin ships as one file.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>TargetBoard</RootNamespace>
+    <AssemblyName>TargetBoard</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Two of NINA's own dependencies are .NET Framework packages; the warning about them is harmless. -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <!-- NINA already ships every dependency; only TargetBoard.dll needs copying. -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- Where NINA 3.x looks for user plugins. -->
+    <NinaPluginFolder>$(LOCALAPPDATA)\NINA\Plugins\3.0.0\Target Board</NinaPluginFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NINA.Plugin" Version="3.2.0.9001" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\TargetBoard.Core\**\*.cs"
+             Exclude="..\TargetBoard.Core\obj\**;..\TargetBoard.Core\bin\**"
+             Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- After a Debug or Release build, copy the DLL into NINA's plugin folder. Close NINA first. -->
+  <Target Name="DeployToNina" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' And '$(SkipNinaDeploy)' != 'true'">
+    <MakeDir Directories="$(NinaPluginFolder)" />
+    <Copy SourceFiles="$(TargetPath);$(TargetDir)$(TargetName).pdb" DestinationFolder="$(NinaPluginFolder)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <Message Importance="high" Text="Target Board copied to $(NinaPluginFolder)" />
+  </Target>
+
+</Project>
