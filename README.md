@@ -1,8 +1,23 @@
 # Target Board for N.I.N.A.
 
-A calendar for your imaging targets, built like Google Calendar. It reads your NINA sequence files, shows each target's progress, and lets you plan targets onto nights by dragging them. It never changes a sequence file.
+A calendar for your imaging targets, built like Google Calendar. It reads your NINA sequence files, shows each target's progress, and lets you plan targets onto nights by dragging them.
+
+**It is read-only. It cannot change your sequences, and it does not run them.**
 
 Built for NINA 3.2 (.NET 8). NINA 3.3 nightlies load it too.
+
+## Read-only
+
+Target Board looks at your sequences; it has no way to change them.
+
+- **Sequence files.** It opens `.json`, `.xml` and `.ninaTargetSet` files only to read them. It never saves, edits, creates, renames, moves or deletes them.
+- **Sequences open in NINA.** It does not add or remove targets, or change exposures, counts, filters or conditions in either of NINA's sequencers.
+- **Running.** It does not load, start, stop or skip a sequence, and it does not touch your equipment. The calendar is a plan for you to follow; NINA does not act on it. You load and run your sequences in NINA as usual.
+- **The board's own settings.** Conditions you set on a target, **Mark as done**, **Hide**, colors and notes live in the board's own files. They change what the board shows and plans, not the sequence.
+
+From NINA it reads your profile's location, custom horizon and twilight times, the details of each light frame NINA saves, and which sequence file is running. It writes only its own files, in `Documents\N.I.N.A\TargetBoard` (see [Where the data lives](#where-the-data-lives)).
+
+To change a sequence, edit and save it in NINA. The board reads the saved file again within a few seconds; **Re-read** does it at once.
 
 ## What it does
 
@@ -95,7 +110,7 @@ The settle relies on the frame log. If **Log every light frame** is off, past ev
 
 **Marking a target done.** Use this when you have enough data, or have given up on a target, but its sequence still has frames to take. The board then counts it as finished: it has nothing left to place, it drops out of the list unless **Show finished** is on (its details, if open, stay open until you close them), and its history records the date you marked it. Its real progress still shows. Events you already planned stay on the calendar until you remove them. The sequence file is not changed. **Mark as not done** undoes it, and that is recorded too.
 
-**Conditions.** New targets get the defaults from the settings: altitude at least 30° and above your custom horizon. If the sequence has *Loop until altitude*, *Above horizon*, *Wait for altitude* or *Wait until above horizon*, those are copied too. Change them per target in the details panel. **Reset** puts back the defaults plus the sequence's own conditions.
+**Conditions.** New targets get the defaults from the settings: altitude at least 30° and above your custom horizon. If the sequence has *Loop until altitude*, *Above horizon*, *Wait for altitude* or *Wait until above horizon*, those are copied too. Change them per target in the details panel; this changes only the board's copy, not the sequence. **Reset** puts back the defaults plus the sequence's own conditions.
 
 ## How progress is read
 
